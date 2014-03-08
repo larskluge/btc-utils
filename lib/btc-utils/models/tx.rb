@@ -2,7 +2,7 @@ class BtcUtils::Models::Tx
   attr_reader :raw
 
   def self.find id
-    self.new $bitcoin_client.raw_transaction id
+    self.new BtcUtils.client.raw_decoded_tx id
   end
 
 
@@ -15,20 +15,14 @@ class BtcUtils::Models::Tx
   end
 
   def in
-    @raw['vin'].map do |input|
-      TxIn.new input
+    @in ||= @raw['vin'].map do |input|
+      BtcUtils::Models::TxIn.new input
     end
   end
 
-  def out only_idx = nil
+  def out
     @out ||= @raw['vout'].map do |output|
-      TxOut.new output
-    end
-
-    if only_idx
-      @out.select { |txout| txout.idx == only_idx }
-    else
-      @out
+      BtcUtils::Models::TxOut.new output
     end
   end
 
@@ -36,24 +30,39 @@ class BtcUtils::Models::Tx
     out.detect { |txout| txout.idx == idx }
   end
 
-  def vin
-    @raw['vin']
-  end
-
-  def vout
-    @raw['vout']
-  end
-
   def total_in
-    self.in.sum { |txin| txin.tx.total_out txin.idx }
+    self.in.sum { |txin| txin.tx.out_at(txin.idx).amount }
   end
 
-  def total_out only_idx = nil
-    self.out(only_idx).sum(&:amount)
+  def total_out
+    self.out.sum(&:amount)
   end
 
   def fee
     total_in - total_out
+  end
+
+  def estimated_from_address
+    addresses = self.in.map(&:estimated_from_address).uniq
+    if addresses.size == 1
+      addresses.first
+    else
+      :ambiguous
+    end
+  end
+
+  def wallet_tx
+    @wallet_tx ||= BtcUtils::Models::WalletTx.find(id)
+  end
+
+  def wallet_tx?
+    !!wallet_tx
+  end
+
+  def received_amount
+    if wallet_tx?
+      wallet_tx.amount
+    end
   end
 
 end

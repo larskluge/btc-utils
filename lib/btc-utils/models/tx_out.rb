@@ -9,7 +9,7 @@ class BtcUtils::Models::TxOut
   end
 
   def tx
-    @tx ||= Tx.find id
+    @tx ||= BtcUtils::Models::Tx.find id
   end
 
   def amount

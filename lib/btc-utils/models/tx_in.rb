@@ -9,7 +9,7 @@ class BtcUtils::Models::TxIn
   end
 
   def tx
-    @tx ||= Tx.find id
+    @tx ||= BtcUtils::Models::Tx.find id
   end
 
   def idx
@@ -21,7 +21,7 @@ class BtcUtils::Models::TxIn
     if as.size == 1
       as.first
     else
-      raise "Multiple addresses found! #{as.inspect}"
+      :ambiguous
     end
   end
 
