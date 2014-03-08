@@ -22,7 +22,7 @@ class BtcUtils::Models::Tx
 
   def out
     @out ||= @raw['vout'].map do |output|
-      BtcUtils::Models::TxOut.new output
+      BtcUtils::Models::TxOut.new self, output
     end
   end
 

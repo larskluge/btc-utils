@@ -1,15 +1,9 @@
 class BtcUtils::Models::TxOut
+  attr_reader :parent_tx
 
-  def initialize raw
+  def initialize parent_tx, raw
+    @parent_tx = parent_tx
     @raw = raw
-  end
-
-  def id
-    @raw['txid']
-  end
-
-  def tx
-    @tx ||= BtcUtils::Models::Tx.find id
   end
 
   def amount
@@ -22,6 +16,11 @@ class BtcUtils::Models::TxOut
 
   def addresses
     @raw['scriptPubKey']['addresses']
+  end
+
+  def spent?
+    resp = BtcUtils.client.tx_out @parent_tx.id, idx
+    !resp
   end
 
 end
