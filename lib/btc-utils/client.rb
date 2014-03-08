@@ -18,6 +18,10 @@ class BtcUtils::Client
     decode_raw_transaction raw_tx
   end
 
+  def tx_out txid, idx, include_mem_pool = true
+    api.request 'gettxout', txid, idx, include_mem_pool
+  end
+
 
   def api
     @bitcoin_client.instance_eval('@api')
