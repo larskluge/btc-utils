@@ -33,6 +33,9 @@ class BtcUtils::Models::WalletTx
     # end
   end
 
+  def addresses
+    @raw['details'].map { |detail| detail['address'] }.uniq
+  end
 
 end
 
