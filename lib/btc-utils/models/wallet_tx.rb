@@ -24,7 +24,7 @@ class BtcUtils::Models::WalletTx
   end
 
   def amount
-    @raw['amount']
+    BtcUtils::Convert.btc_to_satoshi @raw['amount']
     # ds = @raw['details']
     # if ds.size == 1
     #   BtcUtils::Convert.btc_to_satoshi ds.first['amount']
