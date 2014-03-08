@@ -13,7 +13,7 @@ class BtcUtils::Models::TxOut
   end
 
   def amount
-    (@raw['value'].to_f * 100_000_000).round
+    BtcUtils::Convert.btc_to_satoshi @raw['value']
   end
 
   def idx

@@ -16,6 +16,10 @@ class BtcUtils::Models::TxIn
     @raw['vout']
   end
 
+  def amount
+    tx.out_at(idx).amount
+  end
+
   def estimated_from_address
     as = tx.out_at(idx).addresses
     if as.size == 1
