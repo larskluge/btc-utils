@@ -25,12 +25,6 @@ class BtcUtils::Models::WalletTx
 
   def amount
     BtcUtils::Convert.btc_to_satoshi @raw['amount']
-    # ds = @raw['details']
-    # if ds.size == 1
-    #   BtcUtils::Convert.btc_to_satoshi ds.first['amount']
-    # else
-    #   raise @raw.inspect
-    # end
   end
 
   def addresses

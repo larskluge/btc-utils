@@ -67,11 +67,5 @@ class BtcUtils::Models::Tx
     !!wallet_tx
   end
 
-  def received_amount
-    if wallet_tx?
-      wallet_tx.amount
-    end
-  end
-
 end
 
