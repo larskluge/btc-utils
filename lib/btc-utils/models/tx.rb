@@ -42,6 +42,14 @@ class BtcUtils::Models::Tx
     total_in - total_out
   end
 
+  # 148 * number_of_inputs + 34 * number_of_outputs + 10
+  #
+  # in bytes
+  #
+  def size
+    148 * self.in.size + 34 * self.out.size + 10
+  end
+
   def estimated_from_address
     addresses = self.in.map(&:estimated_from_address).uniq
     if addresses.size == 1
