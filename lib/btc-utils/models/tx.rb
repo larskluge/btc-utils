@@ -55,7 +55,7 @@ class BtcUtils::Models::Tx
     if addresses.size == 1
       addresses.first
     else
-      :ambiguous
+      fail "ambiguous; multiple different input addresses: #{addresses.inspect}"
     end
   end
 
