@@ -27,6 +27,14 @@ class BtcUtils::Models::WalletTx
     BtcUtils::Convert.btc_to_satoshi @raw['amount']
   end
 
+  def category
+    if amount > 0
+      :received
+    else
+      :sent
+    end
+  end
+
   def addresses
     @raw['details'].map { |detail| detail['address'] }.uniq
   end
