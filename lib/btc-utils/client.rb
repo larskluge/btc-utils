@@ -22,6 +22,14 @@ class BtcUtils::Client
     api.request 'gettxout', txid, idx, include_mem_pool
   end
 
+  def list_unspent min_conf = 1, max_conf = 999999
+    api.request 'listunspent', min_conf, max_conf
+  end
+
+  def list_lock_unspent
+    api.request 'listlockunspent'
+  end
+
 
   def api
     @bitcoin_client.instance_eval('@api')
