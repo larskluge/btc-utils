@@ -39,5 +39,13 @@ class BtcUtils::Models::WalletTx
     @raw['details'].map { |detail| detail['address'] }.uniq
   end
 
+  def address
+    if addresses.size == 1
+      addresses.first
+    else
+      fail "Multiple wallet addresses involved #{self.inspect}"
+    end
+  end
+
 end
 
