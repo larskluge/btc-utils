@@ -4,9 +4,12 @@ class BtcUtils::Models::TxBuilder
   attr_reader :to, :amount, :change_address, :required_spent_txid
 
 
-  def initialize to, amount, change_address, opts = {}
+  # to: {address => amount, another_address => amount, ...}
+  #
+  # amount in satoshis
+  #
+  def initialize to, change_address, opts = {}
     @to = to
-    @amount = amount.to_i # satoshis
     @change_address = change_address
 
     case opts[:required_spent]
@@ -15,8 +18,13 @@ class BtcUtils::Models::TxBuilder
     when Array
       @required_spent_txid, @required_spent_idx = opts[:required_spent]
     end
+
+    @only_spend_from_address = opts[:only_spend_from_address]
   end
 
+  def amount
+    @to.values.sum
+  end
 
   def unspent_list
     @unspent_list ||= BtcUtils::Models::UnspentList.create
@@ -41,7 +49,7 @@ class BtcUtils::Models::TxBuilder
 
       unspent_list.mark_required_spent!(required_spent_txid, required_spent_idx) if required_spent_txid
 
-      utxouts = unspent_list.select_for_amount amount
+      utxouts = unspent_list.select_for_amount amount, only_address: @only_spend_from_address
       Log.info spend_select_count: utxouts.size
       utxouts
     end
@@ -74,9 +82,14 @@ class BtcUtils::Models::TxBuilder
     (estimated_size / 1_000 + 1) * MIN_FEE
   end
 
-  def sent!
+  def send!
     tx_param = selected_inputs.map { |utxout| {txid: utxout.txid, vout: utxout.vout} }
-    address_param = {to => BtcUtils::Convert.satoshi_to_btc(amount), change_address => BtcUtils::Convert.satoshi_to_btc(change_amount)}
+    # address_param = to.dup{to => BtcUtils::Convert.satoshi_to_btc(amount), change_address => BtcUtils::Convert.satoshi_to_btc(change_amount)}
+    address_param = to.inject({}) do |h,(address, amount)|
+      h[address] = BtcUtils::Convert.satoshi_to_btc(amount)
+      h
+    end
+    address_param[change_address] = BtcUtils::Convert.satoshi_to_btc(change_amount) if change_amount > 0
 
     Log.info total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_param.values.sum), change_amount: change_amount, tx_param: tx_param, address_param: address_param
 
