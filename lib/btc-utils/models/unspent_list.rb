@@ -42,12 +42,16 @@ class BtcUtils::Models::UnspentList
     @list.select(&:required_spent)
   end
 
-  def select_for_amount satoshis
+  def select_for_amount satoshis, opts = {}
+    only_address = opts[:only_address]
     utxouts = required_spents
     left = @list - utxouts
 
     while utxouts.sum(&:amount) < satoshis or left.empty? do
-      utxouts.push left.shift
+      utxout = left.shift
+      if only_address.nil? or utxout.address == only_address
+        utxouts.push utxout
+      end
     end
 
     if left.empty?
