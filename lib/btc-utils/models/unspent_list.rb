@@ -47,7 +47,7 @@ class BtcUtils::Models::UnspentList
     utxouts = required_spents
     left = @list - utxouts
 
-    while utxouts.sum(&:amount) < satoshis or left.empty? do
+    while utxouts.sum(&:amount) < satoshis and !left.empty? do
       utxout = left.shift
       if only_address.nil? or utxout.address == only_address
         utxouts.push utxout
