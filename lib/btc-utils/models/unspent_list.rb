@@ -54,7 +54,7 @@ class BtcUtils::Models::UnspentList
       end
     end
 
-    if left.empty?
+    if utxouts.sum(&:amount) < satoshis
       fail "Not sufficiant funds available to spent amount=#{satoshis}"
     else
       utxouts
