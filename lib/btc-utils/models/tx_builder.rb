@@ -120,7 +120,7 @@ class BtcUtils::Models::TxBuilder
     signed_raw_tx = resp['hex']
 
     if resp['complete']
-      txid = BtcUtils.client.api.request 'sendrawtransaction', signed_raw_tx, false
+      txid = BtcUtils.client.api.request 'sendrawtransaction', signed_raw_tx
       Log.info 'Transaction successfully submitted', txid: txid
     else
       fail "Signing process failed with #{resp.inspect}"
