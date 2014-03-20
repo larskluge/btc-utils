@@ -12,6 +12,8 @@ class BtcUtils::Models::TxBuilder
     @to = to
     @change_address = change_address
 
+    Log.info context: 'TxBuilder', to: to, change_address: change_address, opts: opts
+
     case opts[:required_spent]
     when String
       @required_spent_txid = opts[:required_spent]
@@ -24,6 +26,12 @@ class BtcUtils::Models::TxBuilder
 
   def amount
     @to.values.sum
+  end
+
+  # amount incl fee
+  #
+  def total_amount
+    amount + fee
   end
 
   def unspent_list
@@ -43,15 +51,20 @@ class BtcUtils::Models::TxBuilder
     end
   end
 
-  def selected_inputs
+  def selected_inputs estimated_number_of_inputs = 2
     @selected_inputs ||= begin
-      Log.info unspent_count: unspent_list.size
+      Log.info context: 'TxBuilder#selected_inputs', unspent_count: unspent_list.size, estimated_number_of_inputs: estimated_number_of_inputs
 
       unspent_list.mark_required_spent!(required_spent_txid, required_spent_idx) if required_spent_txid
 
-      utxouts = unspent_list.select_for_amount amount, only_address: @only_spend_from_address
+      utxouts = unspent_list.select_for_amount amount + fee(estimated_number_of_inputs), only_address: @only_spend_from_address
       Log.info spend_select_count: utxouts.size
-      utxouts
+      if estimated_number_of_inputs != utxouts.size
+        Log.info msg: 'Estimated number of inputs is wrong, recalculating', context: 'TxBuilder#selected_inputs', estimated_number_of_inputs: estimated_number_of_inputs, number_of_selected_inputs: utxouts.size
+        selected_inputs utxouts.size
+      else
+        utxouts
+      end
     end
   end
 
@@ -63,13 +76,18 @@ class BtcUtils::Models::TxBuilder
     selected_amount - amount - fee
   end
 
-  # 148 * number_of_inputs + 34 * number_of_outputs + 10
+  # Estimates the tx size by the following formular:
   #
-  def estimated_size
-    # probably there always will be a change output; can't call #change_amount or would end up in recursion
-    number_of_outputs = 2
+  # size in bytes = 148 * number_of_inputs + 34 * number_of_outputs + 10
+  #
+  # for_n_inputs
+  #
+  def estimated_size for_n_inputs = nil
+    # to addresses + 1 for change
+    number_of_outputs = @to.keys.size + 1
+    number_of_inputs  = for_n_inputs || selected_inputs.size
 
-    148 * selected_inputs.size + 34 * number_of_outputs + 10
+    148 * number_of_inputs + 34 * number_of_outputs + 10
   end
 
   # fee calulation is based on tx size *only*
@@ -78,8 +96,8 @@ class BtcUtils::Models::TxBuilder
   #
   # MIN_FEE per 1,000 bytes
   #
-  def fee
-    (estimated_size / 1_000 + 1) * MIN_FEE
+  def fee for_n_inputs = nil
+    (estimated_size(for_n_inputs) / 1_000 + 1) * MIN_FEE
   end
 
   def send!

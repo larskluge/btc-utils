@@ -7,6 +7,8 @@ Bundler.require(:default, ENV['ENV'])
 
 require 'rr'
 require 'yaml'
+require 'json'
+require 'logger'
 
 require 'btc-utils'
 
@@ -24,6 +26,10 @@ RSpec.configure do |config|
 
 
   config.mock_framework = :rr
+
+  config.before :suite do
+    Log = Logger.new(STDOUT)
+  end
 
   config.before do
     module BtcUtils
