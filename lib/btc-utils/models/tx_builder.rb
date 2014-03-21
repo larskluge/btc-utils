@@ -12,7 +12,7 @@ class BtcUtils::Models::TxBuilder
     @to = to
     @change_address = change_address
 
-    Log.info context: 'TxBuilder', to: to, change_address: change_address, opts: opts
+    Log.info context: 'TxBuilder#initialize', to: to, change_address: change_address, opts: opts
 
     case opts[:required_spent]
     when String
@@ -76,6 +76,16 @@ class BtcUtils::Models::TxBuilder
     selected_amount - amount - fee
   end
 
+  def number_of_inputs
+    selected_inputs.size
+  end
+
+  # number of to addresses + 1 for change
+  #
+  def number_of_outputs
+    to.keys.size + 1
+  end
+
   # Estimates the tx size by the following formular:
   #
   # size in bytes = 148 * number_of_inputs + 34 * number_of_outputs + 10
@@ -83,11 +93,7 @@ class BtcUtils::Models::TxBuilder
   # for_n_inputs
   #
   def estimated_size for_n_inputs = nil
-    # to addresses + 1 for change
-    number_of_outputs = @to.keys.size + 1
-    number_of_inputs  = for_n_inputs || selected_inputs.size
-
-    148 * number_of_inputs + 34 * number_of_outputs + 10
+    148 * (for_n_inputs or number_of_inputs) + 34 * number_of_outputs + 10
   end
 
   # fee calulation is based on tx size *only*
