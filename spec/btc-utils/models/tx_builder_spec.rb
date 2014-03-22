@@ -168,6 +168,11 @@ END
       expect(t.address_params).to eq({'foo' => 1.0, 'change_address' => 1.9999})
     end
 
+    it 'recipient and change address is the same' do
+      t = tx({'baz' => 2000_0000, 'change_address' => 5000_0000}, listunspent: listunspent3)
+      expect(t.address_params).to eq({'baz' => 0.2, 'change_address' => 0.7999})
+    end
+
     context 'with required_spent' do
 
       it 'uses only the required input' do

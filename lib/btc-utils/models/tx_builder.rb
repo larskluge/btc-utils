@@ -115,7 +115,10 @@ class BtcUtils::Models::TxBuilder
       h[address] = BtcUtils::Convert.satoshi_to_btc(amount)
       h
     end
-    res[change_address] = BtcUtils::Convert.satoshi_to_btc(change_amount) if change_amount > 0
+    if change_amount > 0
+      res[change_address] ||= 0
+      res[change_address] += BtcUtils::Convert.satoshi_to_btc(change_amount)
+    end
     res
   end
 
