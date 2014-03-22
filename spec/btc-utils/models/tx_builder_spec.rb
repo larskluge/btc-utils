@@ -40,6 +40,7 @@ END
     unspent_list = opts.delete(:listunspent) || listunspent
     t = BtcUtils::Models::TxBuilder.new to, 'change_address', opts
     t.instance_variable_set(:@unspent_list, BtcUtils::Models::UnspentList.new(unspent_list))
+    t.check_fee!
     t
   end
 

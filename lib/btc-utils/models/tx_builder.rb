@@ -119,20 +119,33 @@ class BtcUtils::Models::TxBuilder
     res
   end
 
+  def check_fee!
+    total_amount_of_inputs  = tx_params.sum { |tx| unspent_list.find(tx[:txid], tx[:vout]).amount }
+    total_amount_of_outputs = address_params.values.sum { |btc| BtcUtils::Convert.btc_to_satoshi(btc) }
+    fee = total_amount_of_inputs - total_amount_of_outputs
+
+    if fee > MIN_FEE * 10
+      fail "There is something wrong with the fee"
+    else
+      true
+    end
+  end
+
   def send!
-    Log.info total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_params.values.sum), change_amount: change_amount, tx_params: tx_params, address_params: address_params
+    check_fee!
+    Log.info context: 'TxBuilder#send!', total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_params.values.sum), change_amount: change_amount, tx_params: tx_params, address_params: address_params
 
     # createrawtransaction [{"txid":txid,"vout":n},...] {address:amount,...}
     raw_tx = BtcUtils.client.api.request 'createrawtransaction', tx_params, address_params
-    Log.info 'createrawtransaction', raw_tx: raw_tx
+    Log.info 'createrawtransaction', context: 'TxBuilder#send!', raw_tx: raw_tx
 
     resp = BtcUtils.client.api.request 'signrawtransaction', raw_tx
-    Log.info 'signrawtransaction', response: resp
+    Log.info 'signrawtransaction', context: 'TxBuilder#send!', signed_tx: resp
     signed_raw_tx = resp['hex']
 
     if resp['complete']
       txid = BtcUtils.client.api.request 'sendrawtransaction', signed_raw_tx
-      Log.info 'Transaction successfully submitted', txid: txid
+      Log.info 'Transaction successfully submitted', context: 'TxBuilder#send!', txid: txid
     else
       fail "Signing process failed with #{resp.inspect}"
     end
