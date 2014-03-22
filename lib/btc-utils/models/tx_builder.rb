@@ -25,7 +25,7 @@ class BtcUtils::Models::TxBuilder
   end
 
   def amount
-    @to.values.sum
+    to.values.sum
   end
 
   # amount incl fee
@@ -90,10 +90,10 @@ class BtcUtils::Models::TxBuilder
   #
   # size in bytes = 148 * number_of_inputs + 34 * number_of_outputs + 10
   #
-  # for_n_inputs
+  # overwrite_n_inputs
   #
-  def estimated_size for_n_inputs = nil
-    148 * (for_n_inputs or number_of_inputs) + 34 * number_of_outputs + 10
+  def estimated_size overwrite_n_inputs = nil
+    148 * (overwrite_n_inputs or number_of_inputs) + 34 * number_of_outputs + 10
   end
 
   # fee calulation is based on tx size *only*
@@ -102,23 +102,28 @@ class BtcUtils::Models::TxBuilder
   #
   # MIN_FEE per 1,000 bytes
   #
-  def fee for_n_inputs = nil
-    (estimated_size(for_n_inputs) / 1_000 + 1) * MIN_FEE
+  def fee overwrite_n_inputs = nil
+    (estimated_size(overwrite_n_inputs) / 1_000 + 1) * MIN_FEE
   end
 
-  def send!
-    tx_param = selected_inputs.map { |utxout| {txid: utxout.txid, vout: utxout.vout} }
-    # address_param = to.dup{to => BtcUtils::Convert.satoshi_to_btc(amount), change_address => BtcUtils::Convert.satoshi_to_btc(change_amount)}
-    address_param = to.inject({}) do |h,(address, amount)|
+  def tx_params
+    selected_inputs.map { |utxout| {txid: utxout.txid, vout: utxout.vout} }
+  end
+
+  def address_params
+    res = to.inject({}) do |h,(address, amount)|
       h[address] = BtcUtils::Convert.satoshi_to_btc(amount)
       h
     end
-    address_param[change_address] = BtcUtils::Convert.satoshi_to_btc(change_amount) if change_amount > 0
+    res[change_address] = BtcUtils::Convert.satoshi_to_btc(change_amount) if change_amount > 0
+    res
+  end
 
-    Log.info total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_param.values.sum), change_amount: change_amount, tx_param: tx_param, address_param: address_param
+  def send!
+    Log.info total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_params.values.sum), change_amount: change_amount, tx_params: tx_params, address_params: address_params
 
     # createrawtransaction [{"txid":txid,"vout":n},...] {address:amount,...}
-    raw_tx = BtcUtils.client.api.request 'createrawtransaction', tx_param, address_param
+    raw_tx = BtcUtils.client.api.request 'createrawtransaction', tx_params, address_params
     Log.info 'createrawtransaction', raw_tx: raw_tx
 
     resp = BtcUtils.client.api.request 'signrawtransaction', raw_tx
