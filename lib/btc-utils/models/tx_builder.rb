@@ -1,7 +1,7 @@
 class BtcUtils::Models::TxBuilder
   MIN_FEE = 1_0000 # satoshis
 
-  attr_reader :to, :amount, :change_address, :required_spent_txid
+  attr_reader :to, :change_address, :required_spent_txid
 
 
   # to: {address => amount, another_address => amount, ...}
