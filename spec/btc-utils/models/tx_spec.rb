@@ -12,7 +12,7 @@ describe BtcUtils::Models::Tx do
       expect(t).to be_kind_of(BtcUtils::Models::Tx)
     end
 
-    it 'raises if transaction not found' do
+    it 'raises RPCError if transaction not found' do
       expect {
         BtcUtils::Models::Tx.find('doesnotexist')
       }.to raise_error(Bitcoin::Errors::RPCError)
@@ -49,6 +49,14 @@ describe BtcUtils::Models::Tx do
 
     it 'entries are of type TxOut' do
       expect(transaction_42_mbtc.out.first).to be_kind_of(BtcUtils::Models::TxOut)
+    end
+
+  end
+
+  describe '#size' do
+
+    it 'calculates properly' do
+      expect(transaction_42_mbtc.size).to eq(148 + 34 * 2 + 10) # 1 x in, 2 x out
     end
 
   end
