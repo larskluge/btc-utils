@@ -12,7 +12,7 @@ class BtcUtils::Models::TxBuilder
     @to = to
     @change_address = change_address
 
-    Log.info context: 'TxBuilder#initialize', to: to, change_address: change_address, opts: opts
+    Log.info 'TxBuilder#initialize', to: to, change_address: change_address, opts: opts
 
     case opts[:required_spent]
     when String
@@ -53,14 +53,14 @@ class BtcUtils::Models::TxBuilder
 
   def selected_inputs estimated_number_of_inputs = 2
     @selected_inputs ||= begin
-      Log.info context: 'TxBuilder#selected_inputs', unspent_count: unspent_list.size, estimated_number_of_inputs: estimated_number_of_inputs
+      Log.info 'TxBuilder#selected_inputs', unspent_count: unspent_list.size, estimated_number_of_inputs: estimated_number_of_inputs
 
       unspent_list.mark_required_spent!(required_spent_txid, required_spent_idx) if required_spent_txid
 
       utxouts = unspent_list.select_for_amount amount + fee(estimated_number_of_inputs), only_address: @only_spend_from_address
-      Log.info spend_select_count: utxouts.size
+      Log.info 'TxBuilder#selected_inputs', spend_select_count: utxouts.size
       if estimated_number_of_inputs != utxouts.size
-        Log.info msg: 'Estimated number of inputs is wrong, recalculating', context: 'TxBuilder#selected_inputs', estimated_number_of_inputs: estimated_number_of_inputs, number_of_selected_inputs: utxouts.size
+        Log.info 'Estimated number of inputs is wrong, recalculating', context: 'TxBuilder#selected_inputs', estimated_number_of_inputs: estimated_number_of_inputs, number_of_selected_inputs: utxouts.size
         selected_inputs utxouts.size
       else
         utxouts
@@ -136,7 +136,7 @@ class BtcUtils::Models::TxBuilder
 
   def send!
     check_fee!
-    Log.info context: 'TxBuilder#send!', total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_params.values.sum), change_amount: change_amount, tx_params: tx_params, address_params: address_params
+    Log.info 'TxBuilder#send!', total_amount_selected: selected_amount, total_out: BtcUtils::Convert.btc_to_satoshi(address_params.values.sum), change_amount: change_amount, tx_params: tx_params, address_params: address_params
 
     # createrawtransaction [{"txid":txid,"vout":n},...] {address:amount,...}
     raw_tx = BtcUtils.client.api.request 'createrawtransaction', tx_params, address_params
