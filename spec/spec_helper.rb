@@ -27,8 +27,9 @@ RSpec.configure do |config|
 
   config.mock_framework = :rr
 
-  config.before :suite do
-    Log = Logger.new(STDOUT)
+  config.before do
+    Log ||= BasicObject.new
+    stub(Log).info(is_a(String), anything)
   end
 
   config.before do
