@@ -3,10 +3,11 @@ require 'spec_helper'
 describe BtcUtils::Client do
 
   it 'creates a client with properties from ENV' do
-    mock(::Bitcoin::Client).new 'user', 'pass', hash_including(port: 10099)
-    env, ENV = ENV, { 'RPC_USER' => 'user', 'RPC_PASS' => 'pass', 'RPC_PORT' => 10099 }
+    mock(::Bitcoin::Client).new 'user', 'pass', hash_including(port: "10099")
+    user, pass, port = ENV.values_at(*%w<RPC_USER RPC_PASS RPC_PORT>)
+    ENV['RPC_USER'], ENV['RPC_PASS'], ENV['RPC_PORT'] = %w(user pass 10099)
     BtcUtils::Client.new
-    ENV = env
+    ENV['RPC_USER'], ENV['RPC_PASS'], ENV['RPC_PORT'] = user, pass, port
   end
 
   it 'delegates missing methods to the related Bitcoin client instance' do
